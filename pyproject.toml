@@ -1,0 +1,45 @@
+[tool.poetry]
+name = "diploma-work"
+version = "0.1.0"
+description = "Дипломный:проект на тему: Платформа для публикации платного контента"
+authors = ["Svetlana Kalashnikova <serebsveta@rambler.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+dotenv = "^0.9.9"
+celery = "^5.5.3"
+stripe = "^12.4.0"
+django-filter = "^25.1"
+
+[tool.poetry.group.lint.dependencies]
+flake8 = "^7.3.0"
+mypy = "^1.17.1"
+black = "^25.1.0"
+isort = "^6.0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+# Максимальная длина строки
+line-length = 119
+# Файлы, которые не нужно форматировать
+exclude = '''
+\.git
+|\.venv
+|venv
+|__pycache__
+|\.mypy_cache
+'''
+
+[tool.isort]
+# Максимальная длина строки
+line_length = 119
+multi_line_output = 3
+
+[tool.mypy]
+disallow_untyped_defs = true
+warn_return_any = true
+exclude = 'venv'
