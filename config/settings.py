@@ -15,7 +15,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -105,8 +105,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 # использование кастомной модели пользователя для авторизации
 AUTH_USER_MODEL = "users.CustomUser"
 
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/"
+LOGIN_URL = "/users/login/"
+LOGIN_REDIRECT_URL = "/entries/"  # после входа переходим на страницу записей
+LOGOUT_REDIRECT_URL = "/entries/"  # после выхода тоже на страницу записей
 
 # Настройки JWT-токенов
 REST_FRAMEWORK = {
@@ -136,6 +137,15 @@ SWAGGER_SETTINGS = {
         },
     }
 }
+
+# Настройки почты (для отправки писем)
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.rambler.ru"  # используемый SMTP сервер
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 if "test" in sys.argv:
     DATABASES = {

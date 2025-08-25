@@ -1,27 +1,79 @@
+from django.shortcuts import render, redirect
+from .forms import LoginForm, RegistrationForm
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.conf import settings
+from django.contrib.auth import authenticate, login
 import stripe
-from .models import CustomUser, Payment
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer
+from .models import Payment
+from .serializers import UserRegistrationSerializer, UserProfileSerializer
+from django.contrib.auth.views import (
+    PasswordResetView,
+    PasswordResetDoneView,
+    PasswordResetConfirmView,
+    PasswordResetCompleteView,
+)
+from django.urls import reverse_lazy
+from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
-class UserRegistrationView(generics.CreateAPIView):
-    queryset = CustomUser.objects.all()
-    serializer_class = UserRegistrationSerializer
+class UserRegistrationView(APIView):
     permission_classes = [AllowAny]
+
+    def get(self, request):
+        form = RegistrationForm()
+        return render(request, "users/register.html", {"form": form})
+
+    def post(self, request):
+        # Для HTML формы
+        if request.content_type == "application/x-www-form-urlencoded":
+            form = RegistrationForm(request.POST)
+            if form.is_valid():
+                # Создаем пользователя через сериализатор
+                serializer = UserRegistrationSerializer(data=form.cleaned_data)
+                if serializer.is_valid():
+                    user = serializer.save()
+                    login(request, user)
+                    return redirect("/entries/")  # Редирект на страницу записей после регистрации
+                else:
+                    # Добавляем ошибки сериализатора к форме
+                    for field, errors in serializer.errors.items():
+                        for error in errors:
+                            form.add_error(field, error)
+            return render(request, "users/register.html", {"form": form})
+
+        # Для API запросов (JSON)
+        else:
+            serializer = UserRegistrationSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserLoginView(APIView):
     permission_classes = [AllowAny]
 
+    def get(self, request):
+        form = LoginForm()
+        return render(request, "users/login.html", {"form": form})
+
     def post(self, request):
-        serializer = UserLoginSerializer(data=request.data)
-        if serializer.is_valid():
-            return Response({"user": UserProfileSerializer(serializer.validated_data["user"]).data})
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        form = LoginForm(data=request.POST)
+        if form.is_valid():
+            phone = form.cleaned_data["phone"]
+            password = request.POST.get("password")
+            user = authenticate(request, phone=phone, password=password)
+            if user is not None:
+                login(request, user)
+                # Редирект на главную страницу или другую нужную вам страницу
+                return redirect("/entries/")  # Редирект на страницу записей после входа
+            else:
+                form.add_error(None, "Неверные учетные данные")
+        return render(request, "users/login.html", {"form": form})
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
@@ -30,6 +82,15 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class UserProfileHTMLView(LoginRequiredMixin, TemplateView):
+    template_name = "users/profile.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["user"] = self.request.user
+        return context
 
 
 class SubscriptionView(APIView):
@@ -93,3 +154,25 @@ class PaymentWebhookView(APIView):
                 return Response(status=status.HTTP_404_NOT_FOUND)
 
         return Response(status=status.HTTP_200_OK)
+
+
+# Для восстановления пароля
+
+
+class UserPasswordResetView(PasswordResetView):
+    template_name = "users/registration/password_reset.html"
+    email_template_name = "users/registration/password_reset_email.html"
+    success_url = reverse_lazy("password_reset_done")
+
+
+class UserPasswordResetDoneView(PasswordResetDoneView):
+    template_name = "users/registration/password_reset_done.html"
+
+
+class UserPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = "users/registration/password_reset_confirm.html"
+    success_url = reverse_lazy("password_reset_complete")
+
+
+class UserPasswordResetCompleteView(PasswordResetCompleteView):
+    template_name = "users/registration/password_reset_complete.html"

@@ -15,7 +15,7 @@ class RegistrationForm(UserCreationForm):
     """Форма для регистрации нового пользователя."""
 
     email = forms.EmailField(required=True)
-    phone = forms.CharField(label="Телефон", max_length=15)
+    phone = forms.CharField(required=True, label="Телефон", max_length=15)
 
     class Meta:
         model = CustomUser
@@ -31,4 +31,5 @@ class RegistrationForm(UserCreationForm):
 class LoginForm(AuthenticationForm):
     """Форма входа пользователя по номеру телефона."""
 
-    username = forms.CharField(label="Телефон", max_length=15)
+    phone = forms.CharField()
+    password = forms.CharField(widget=forms.PasswordInput)

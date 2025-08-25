@@ -4,14 +4,30 @@ from .models import CustomUser, Payment
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+    password1 = serializers.CharField(write_only=True)
+    password2 = serializers.CharField(write_only=True)
 
     class Meta:
         model = CustomUser
-        fields = ["phone", "email", "username", "password"]
+        fields = ["phone", "email", "username", "password1", "password2"]
+
+    def validate(self, data):
+        if data["password1"] != data["password2"]:
+            raise serializers.ValidationError("Пароли не совпадают")
+        return data
 
     def create(self, validated_data):
-        user = CustomUser.objects.create_user(**validated_data)
+        # Извлекаем пароли
+        password = validated_data.pop("password1")
+        validated_data.pop("password2")  # Удаляем password2
+
+        # Создаем пользователя
+        user = CustomUser.objects.create_user(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            phone=validated_data["phone"],
+            password=password,  # Пароль передается отдельным аргументом
+        )
         return user
 
 
