@@ -1,0 +1,54 @@
+{% extends 'includes/base.html' %}
+
+{% block title %}
+{% if form.instance.pk %}Редактирование записи{% else %}Создание записи{% endif %} - ContentPlatform
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                {% if form.instance.pk %}Редактирование записи{% else %}Создание новой записи{% endif %}
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">
+                            {{ field.label }}
+                            {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            {% if form.instance.pk %}Сохранить{% else %}Создать{% endif %}
+                        </button>
+                        <a href="{% if form.instance.pk %}{% url 'entry-detail' form.instance.pk %}{% else %}{% url 'entry-list' %}{% endif %}" 
+                           class="btn btn-secondary">
+                            Отмена
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    textarea.form-control {
+        min-height: 200px;
+    }
+</style>
+{% endblock %}

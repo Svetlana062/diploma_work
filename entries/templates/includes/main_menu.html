@@ -1,0 +1,37 @@
+<div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
+    <h5 class="my-0 mr-md-auto font-weight-normal">ContentPlatform</h5>
+
+    <nav class="ms-3 d-flex align-items-center">
+        <!-- Основные ссылки -->
+        <a class="p-2 btn btn-outline-primary me-2" href="{% url 'entry-list' %}">Все записи</a>
+        <a class="p-2 btn btn-outline-primary me-2" href="{% url 'free-entries' %}">Бесплатные</a>
+        <a class="p-2 btn btn-outline-primary me-2" href="{% url 'paid-entries' %}">По подписке</a>
+
+        {% if user.is_authenticated %}
+            <!-- Мои записи -->
+            <a class="p-2 btn btn-outline-primary me-2" href="{% url 'my-entries' %}">Мои записи</a>
+
+            <!-- Создать запись -->
+            <a class="p-2 btn btn-outline-success me-2" href="{% url 'entry-create' %}">Создать запись</a>
+
+            <!-- Подписка -->
+            {% if not user.is_subscribed %}
+                <a class="p-2 btn btn-warning me-2" href="{% url 'subscribe' %}">💰 Оформить подписку</a>
+            {% else %}
+                <span class="badge bg-success me-2">Подписка активна</span>
+            {% endif %}
+
+            <!-- Профиль -->
+            <a class="p-2 btn btn-primary me-2" href="{% url 'profile' %}">Профиль</a>
+
+            <!-- Выход -->
+            <a href="{% url 'logout' %}" class="p-2 btn btn-outline-secondary">Выход</a>
+
+            <!-- Войти -->
+            <a class="p-2 btn btn-outline-primary me-2" href="{% url 'login' %}">Войти</a>
+
+            <!-- Регистрация -->
+            <a class="p-2 btn btn-outline-success me-2" href="{% url 'register' %}">Регистрация</a>
+        {% endif %}
+    </nav>
+</div>

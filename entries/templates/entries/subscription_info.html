@@ -1,0 +1,57 @@
+{% extends 'includes/base.html' %}
+
+{% block title %}Оформление подписки - ContentPlatform{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Оформление подписки</h3>
+                </div>
+                <div class="card-body">
+                    <h4 class="text-primary">Преимущества подписки:</h4>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item">✅ Доступ ко всем платным записям</li>
+                        <li class="list-group-item">✅ Эксклюзивный контент от авторов</li>
+                        <li class="list-group-item">✅ Приоритетная поддержка</li>
+                        <li class="list-group-item">✅ Новые материалы первыми</li>
+                    </ul>
+
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Стоимость подписки:</h5>
+                        <p class="mb-0">199 рублей в месяц</p>
+                    </div>
+
+                    {% if user.is_authenticated %}
+                        {% if not user.is_subscribed %}
+                            <form method="post" action="{% url 'subscribe' %}">
+                                {% csrf_token %}
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        💰 Оформить подписку
+                                    </button>
+                                </div>
+                            </form>
+                        {% else %}
+                            <div class="alert alert-success">
+                                <h5 class="alert-heading">🎉 У вас активная подписка!</h5>
+                                <p class="mb-0">Вы уже имеете доступ ко всем платным материалам.</p>
+                            </div>
+                            <a href="{% url 'entry-list' %}" class="btn btn-primary">
+                                Перейти к записям
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <p>Для оформления подписки необходимо <a href="{% url 'login' %}">войти</a> 
+                            или <a href="{% url 'register' %}">зарегистрироваться</a>.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
