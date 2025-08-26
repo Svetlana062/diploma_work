@@ -3,17 +3,17 @@ from users.models import CustomUser
 
 
 class Command(BaseCommand):
-    """Команда для создания суперпользователя с предустановленными
-    данными (email, пароль, активность, статус администратора)."""
+    """Команда для создания суперпользователя с номером телефона и паролем."""
 
-    def handle(self, *args, **options):
-        if not CustomUser.objects.filter(email="admin@example.com").exists():
-            user = CustomUser.objects.create(email="admin@example.com")
-            user.set_password("123qwe")
-            user.is_active = True
-            user.is_staff = True
-            user.is_superuser = True
+    def handle(self, *args, **kwargs):
+        phone_number = "89000000000"
+        email = "admin@example.com"
+        password = "123qwe"
+
+        if not CustomUser.objects.filter(phone=phone_number).exists():
+            user = CustomUser(phone=phone_number, email=email, is_active=True, is_staff=True, is_superuser=True)
+            user.set_password(password)
             user.save()
             self.stdout.write(self.style.SUCCESS("Суперпользователь создан."))
         else:
-            self.stdout.write(self.style.WARNING("Суперпользователь уже существует."))
+            self.stdout.write(self.style.WARNING("Пользователь с этим номером уже существует."))
