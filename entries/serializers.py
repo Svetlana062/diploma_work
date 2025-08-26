@@ -13,14 +13,12 @@ class EntrySerializer(serializers.ModelSerializer):
 
     def get_can_view(self, obj):
         request = self.context.get("request")
-        if not obj.is_paid:
-            return True
-
-        if request and request.user.is_authenticated:
-            # Проверяем, что у пользователя есть атрибут is_subscribed
-            return getattr(request.user, "is_subscribed", False)
-
-        return False
+        if request and hasattr(request, "user") and request.user.is_authenticated:
+            # Логика проверки доступа
+            if not obj.is_paid:
+                return True
+            return request.user.is_subscribed or obj.author == request.user
+        return not obj.is_paid
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

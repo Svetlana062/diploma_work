@@ -19,6 +19,8 @@ from .serializers import EntrySerializer
 from django.contrib import messages
 from django.shortcuts import redirect, render
 
+from .utils import user_has_subscription
+
 
 class EntryViewSet(viewsets.ModelViewSet):
     model = Entry
@@ -32,10 +34,11 @@ class EntryViewSet(viewsets.ModelViewSet):
         queryset = Entry.objects.all()
 
         if self.request.user.is_authenticated:
-            if getattr(self.request.user, "is_subscribed", False):
-                return queryset  # Показываем все записи
+            if user_has_subscription(self.request.user):
+                return queryset  # Показываем все записи подписчику
             else:
-                return queryset.filter(is_paid=False)  # Только бесплатные
+                # Показываем бесплатные + свои платные записи
+                return queryset.filter(Q(is_paid=False) | Q(author=self.request.user))
         else:
             return queryset.filter(is_paid=False)  # Только бесплатные для анонимов
 
@@ -65,15 +68,13 @@ class EntryListView(ListView):
     def get_queryset(self):
         queryset = Entry.objects.all()
 
-        # Если пользователь авторизован
         if self.request.user.is_authenticated:
-            # Если пользователь подписан - показываем все записи
+            # Проверяем подписку
             if hasattr(self.request.user, "is_subscribed") and self.request.user.is_subscribed:
-                return queryset
-            # Если не подписан - показываем бесплатные + свои платные
+                return queryset  # Показываем все записи подписчику
             else:
+                # Показываем бесплатные + свои платные записи
                 return queryset.filter(Q(is_paid=False) | Q(author=self.request.user))
-        # Если не авторизован - только бесплатные
         else:
             return queryset.filter(is_paid=False)
 
@@ -108,10 +109,13 @@ class EntryDetailView(DetailView):
         entry = self.get_object()
         user = request.user
 
-        if entry.is_paid and not (user == entry.author or getattr(user, "is_subscribed", False)):
+        # Разрешаем доступ если: запись бесплатная, пользователь - автор записи,
+        # пользователь имеет подписку
+        if entry.is_paid and not (user == entry.author or user_has_subscription(user)):
+
             if user.is_authenticated:
                 messages.warning(request, "Для просмотра этой записи нужна подписка")
-                return redirect("subscription-info")  # Перенаправляем на страницу информации о подписке
+                return redirect("subscription-info")
             else:
                 messages.warning(request, "Войдите в систему для доступа к платному контенту")
                 return redirect("login")
@@ -127,7 +131,10 @@ class EntryCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.author = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        # Добавляем сообщение об успешном создании
+        messages.success(self.request, "Запись успешно создана!")
+        return response
 
 
 class EntryUpdateView(LoginRequiredMixin, UpdateView):
@@ -139,6 +146,11 @@ class EntryUpdateView(LoginRequiredMixin, UpdateView):
     def get_queryset(self):
         return Entry.objects.filter(author=self.request.user)
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Запись успешно обновлена!")
+        return response
+
 
 class EntryDeleteView(LoginRequiredMixin, DeleteView):
     model = Entry
@@ -147,6 +159,10 @@ class EntryDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_queryset(self):
         return Entry.objects.filter(author=self.request.user)
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, "Запись успешно удалена!")
+        return super().delete(request, *args, **kwargs)
 
 
 class MyEntriesListView(LoginRequiredMixin, ListView):

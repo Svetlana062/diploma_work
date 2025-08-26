@@ -5,7 +5,7 @@ from django.core.validators import RegexValidator
 
 class CustomUser(AbstractUser):
     username = models.CharField(max_length=150, null=True, blank=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(blank=True, null=True)
     phone = models.CharField(
         max_length=16,
         validators=[
@@ -19,7 +19,7 @@ class CustomUser(AbstractUser):
     is_paid = models.BooleanField(default=False)
 
     USERNAME_FIELD = "phone"
-    REQUIRED_FIELDS = ["email", "username"]
+    REQUIRED_FIELDS = ["username"]
 
     def __str__(self):
         return f"{self.phone}"
