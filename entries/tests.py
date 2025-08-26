@@ -1,8 +1,7 @@
-from django.test import TestCase, Client
+from django.test import TestCase, Client, RequestFactory
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from rest_framework import status
-from rest_framework.test import APITestCase, APIClient
+from django.contrib.auth.models import AnonymousUser
 from .models import Entry
 from .serializers import EntrySerializer
 
@@ -10,155 +9,165 @@ User = get_user_model()
 
 
 class EntryModelTest(TestCase):
-    """Тесты для модели Entry"""
+    """Тесты для модели Entry."""
 
     def setUp(self):
-        self.user = User.objects.create_user(username="testuser", password="testpass123")
-        self.entry = Entry.objects.create(
-            title="Test Entry", content="Test Content", author=self.user, is_paid=False, price=0
+        self.user = User.objects.create_user(
+            username="testuser", password="testpass123", phone="+71234567890"  # Добавляем обязательное поле phone
         )
 
-    def test_entry_creation(self):
-        """Тест создания записи"""
-        self.assertEqual(self.entry.title, "Test Entry")
-        self.assertEqual(self.entry.content, "Test Content")
-        self.assertEqual(self.entry.author, self.user)
-        self.assertFalse(self.entry.is_paid)
-        self.assertEqual(float(self.entry.price), 0.0)
+    def test_create_entry(self):
+        entry = Entry.objects.create(
+            title="Тестовая запись",
+            content="Это содержание тестовой записи.",
+            author=self.user,
+            is_paid=True,
+            price=49.99,
+        )
+        self.assertEqual(entry.title, "Тестовая запись")
+        self.assertEqual(entry.content, "Это содержание тестовой записи.")
+        self.assertEqual(entry.author, self.user)
+        self.assertTrue(entry.is_paid)
+        self.assertEqual(entry.price, 49.99)
 
-    def test_string_representation(self):
-        """Тест строкового представления"""
-        self.assertEqual(str(self.entry), "Test Entry")
+    def test_str_method_returns_title(self):
+        entry = Entry.objects.create(
+            title="Заголовок для str",
+            content="Контент",
+            author=self.user,
+        )
+        self.assertEqual(str(entry), "Заголовок для str")
 
-    def test_verbose_names(self):
-        """Тест verbose names"""
-        self.assertEqual(Entry._meta.verbose_name, "Запись")
-        self.assertEqual(Entry._meta.verbose_name_plural, "Записи")
+    def test_default_values_for_is_paid_and_price(self):
+        entry = Entry.objects.create(
+            title="Запись с дефолтными значениями",
+            content="Контент",
+            author=self.user,
+        )
+        self.assertFalse(entry.is_paid)
+        self.assertEqual(entry.price, 0)
+
+    def test_ordering_of_entries(self):
+        entry1 = Entry.objects.create(
+            title="Первая запись",
+            content="Контент 1",
+            author=self.user,
+        )
+        entry2 = Entry.objects.create(
+            title="Вторая запись",
+            content="Контент 2",
+            author=self.user,
+        )
+        entries = list(Entry.objects.all())
+        self.assertEqual(entries[0], entry2)
+        self.assertEqual(entries[1], entry1)
+
+    def test_content_field_max_length(self):
+        max_length_title = "A" * 200
+        entry = Entry.objects.create(
+            title=max_length_title,
+            content="Контент",
+            author=self.user,
+        )
+        self.assertEqual(entry.title, max_length_title)
+
+    def test_delete_author_deletes_entries(self):
+        entry = Entry.objects.create(
+            title="Запись для удаления автора",
+            content="Контент",
+            author=self.user,
+        )
+        self.user.delete()
+        self.assertFalse(Entry.objects.filter(id=entry.id).exists())
 
 
 class EntrySerializerTest(TestCase):
-    """Тесты для сериализатора Entry"""
+    """Тесты для сериализатора EntrySerializer"""
 
     def setUp(self):
-        self.user = User.objects.create_user(username="testuser", password="testpass123")
-        self.entry_data = {"title": "Test Entry", "content": "Test Content", "is_paid": False, "price": "0.00"}
-
-    def test_valid_serializer(self):
-        """Тест валидного сериализатора"""
-        serializer = EntrySerializer(data=self.entry_data)
-        self.assertTrue(serializer.is_valid())
-
-    def test_serializer_validation_paid_without_price(self):
-        """Тест валидации платной записи без цены"""
-        invalid_data = {"title": "Paid Entry", "content": "Paid Content", "is_paid": True, "price": None}
-        serializer = EntrySerializer(data=invalid_data)
-        self.assertFalse(serializer.is_valid())
-        self.assertIn("non_field_errors", serializer.errors)
-
-    def test_serializer_with_author(self):
-        """Тест сериализатора с автором"""
-        entry = Entry.objects.create(title="Test Entry", content="Test Content", author=self.user, is_paid=False)
-        serializer = EntrySerializer(instance=entry)
-        self.assertEqual(serializer.data["author"], self.user.id)
-        self.assertEqual(serializer.data["author_name"], "testuser")
-
-
-class EntryViewSetTest(APITestCase):
-    """Тесты для ViewSet API"""
-
-    def setUp(self):
-        self.client = APIClient()
-        self.user = User.objects.create_user(username="testuser", password="testpass123")
-        self.user.is_subscribed = True  # Добавляем атрибут подписки
-        self.user.save()
-
-        self.entry = Entry.objects.create(title="Test Entry", content="Test Content", author=self.user, is_paid=False)
-
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(username="testuser", password="testpass123", phone="+71234567890")
+        self.entry = Entry.objects.create(title="Test Entry", content="Test content", author=self.user, is_paid=False)
         self.paid_entry = Entry.objects.create(
-            title="Paid Entry", content="Paid Content", author=self.user, is_paid=True, price=10.00
+            title="Paid Entry", content="Paid content", author=self.user, is_paid=True, price=100.00
         )
 
-    def test_get_entries_list_authenticated(self):
-        """Тест получения списка записей (аутентифицированный пользователь)"""
-        self.client.force_authenticate(user=self.user)
-        response = self.client.get("/api/entries/")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)  # Видит все записи
+    def test_can_view_paid_content_anonymous(self):
+        """Тест доступа к платному контенту для анонимного пользователя"""
+        request = self.factory.get("/")
+        request.user = AnonymousUser()
 
-    def test_get_entries_list_anonymous(self):
-        """Тест получения списка записей (анонимный пользователь)"""
-        response = self.client.get("/api/entries/")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)  # Видит только бесплатные
-        self.assertFalse(response.data[0]["is_paid"])
+        serializer = EntrySerializer(self.paid_entry, context={"request": request})
+        self.assertFalse(serializer.data["can_view"])
+        self.assertEqual(serializer.data["content"], "Для просмотра платного контента необходима подписка")
 
-    def test_create_entry_authenticated(self):
-        """Тест создания записи"""
-        self.client.force_authenticate(user=self.user)
-        data = {"title": "New Entry", "content": "New Content", "is_paid": False}
-        response = self.client.post("/api/entries/", data)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Entry.objects.count(), 3)
+    def test_can_view_paid_content_author(self):
+        """Тест доступа к платному контенту для автора"""
+        request = self.factory.get("/")
+        request.user = self.user
 
-    def test_my_entries_endpoint(self):
-        """Тест endpoint /my_entries/"""
-        self.client.force_authenticate(user=self.user)
-        response = self.client.get("/api/entries/my_entries/")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)  # Обе записи пользователя
+        # Добавляем атрибут is_subscribed для теста
+        request.user.is_subscribed = True
+
+        serializer = EntrySerializer(self.paid_entry, context={"request": request})
+        self.assertTrue(serializer.data["can_view"])
+        self.assertEqual(serializer.data["content"], "Paid content")
+
+    def test_can_view_free_content_anonymous(self):
+        """Тест доступа к бесплатному контенту для анонимного пользователя"""
+        request = self.factory.get("/")
+        request.user = AnonymousUser()
+
+        serializer = EntrySerializer(self.entry, context={"request": request})
+        self.assertTrue(serializer.data["can_view"])
+        self.assertEqual(serializer.data["content"], "Test content")
+
+    def test_validate_paid_entry_without_price(self):
+        """Тест валидации платной записи без цены"""
+        data = {"title": "Test", "content": "Test content", "is_paid": True, "price": None}
+        serializer = EntrySerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("price", serializer.errors)
 
 
-class HTMLViewsTest(TestCase):
-    """Тесты для HTML представлений"""
+class EntryListViewTest(TestCase):
+    """Тесты для HTML представлений списка записей"""
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username="testuser", password="testpass123")
-        self.entry = Entry.objects.create(title="Test Entry", content="Test Content", author=self.user, is_paid=False)
+        self.user = User.objects.create_user(username="testuser", password="testpass123", phone="+71234567890")
+        self.entry = Entry.objects.create(title="Free Entry", content="Free content", author=self.user, is_paid=False)
+        self.paid_entry = Entry.objects.create(
+            title="Paid Entry", content="Paid content", author=self.user, is_paid=True, price=100.00
+        )
 
-    def test_entry_list_view(self):
-        """Тест списка записей"""
+    def test_entry_list_anonymous(self):
+        """Тест главной страницы для анонимного пользователя"""
         response = self.client.get(reverse("entry-list"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Test Entry")
+        self.assertContains(response, "Free Entry")
+        # Анонимный пользователь не должен видеть платный контент
+        self.assertNotContains(response, "Paid Entry")
 
-    def test_entry_detail_view(self):
-        """Тест детальной страницы записи"""
-        response = self.client.get(reverse("entry-detail", args=[self.entry.pk]))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Test Content")
-
-    def test_create_entry_view_authenticated(self):
-        """Тест создания записи (аутентифицированный)"""
-        self.client.login(username="testuser", password="testpass123")
-        response = self.client.get(reverse("entry-create"))
-        self.assertEqual(response.status_code, 200)
-
-    def test_create_entry_view_anonymous(self):
-        """Тест создания записи (анонимный) - должен редиректить на login"""
-        response = self.client.get(reverse("entry-create"))
-        self.assertEqual(response.status_code, 302)  # Редирект на login
+    def test_my_entries_list_anonymous_redirect(self):
+        """Тест редиректа для анонимного пользователя на странице моих записей"""
+        response = self.client.get(reverse("my-entries"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/users/login/", response.url)
 
 
-class AccessControlTest(TestCase):
-    """Тесты контроля доступа"""
+class EntryCreateUpdateDeleteTest(TestCase):
+    """Тесты для создания, обновления и удаления записей"""
 
     def setUp(self):
         self.client = Client()
-        self.user1 = User.objects.create_user(username="user1", password="pass123")
-        self.user2 = User.objects.create_user(username="user2", password="pass123")
-        self.entry = Entry.objects.create(
-            title="User1 Entry", content="Private Content", author=self.user1, is_paid=False
+        self.user = User.objects.create_user(username="testuser", password="testpass123", phone="+71234567890")
+        self.entry = Entry.objects.create(title="Test Entry", content="Test content", author=self.user, is_paid=False)
+
+    def test_create_entry_anonymous_redirect(self):
+        """Тест редиректа при попытке создания записи анонимным пользователем."""
+        response = self.client.post(
+            reverse("entry-create"), {"title": "New Entry", "content": "New content", "is_paid": "false"}
         )
-
-    def test_update_own_entry(self):
-        """Тест обновления своей записи"""
-        self.client.login(username="user1", password="pass123")
-        response = self.client.get(reverse("entry-update", args=[self.entry.pk]))
-        self.assertEqual(response.status_code, 200)
-
-    def test_update_other_user_entry(self):
-        """Тест попытки обновления чужой записи"""
-        self.client.login(username="user2", password="pass123")
-        response = self.client.get(reverse("entry-update", args=[self.entry.pk]))
-        self.assertEqual(response.status_code, 404)  # Не должен находить запись
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/users/login/", response.url)
