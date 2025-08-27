@@ -10,7 +10,7 @@ User = get_user_model()
 
 
 class CustomUserModelTest(TestCase):
-    """Тесты для модели CustomUser"""
+    """Тесты для модели CustomUser."""
 
     def setUp(self):
         self.user = User.objects.create_user(
@@ -18,19 +18,19 @@ class CustomUserModelTest(TestCase):
         )
 
     def test_user_creation(self):
-        """Тест создания пользователя"""
+        """Тест создания пользователя."""
         self.assertEqual(self.user.username, "testuser")
         self.assertEqual(self.user.phone, "+1234567890")
         self.assertEqual(self.user.email, "testuser@example.com")
         self.assertFalse(self.user.is_paid)
 
     def test_string_representation(self):
-        """Тест строкового представления"""
+        """Тест строкового представления."""
         self.assertEqual(str(self.user), "+1234567890")
 
 
 class UserRegistrationTest(APITestCase):
-    """Тесты для регистрации пользователей"""
+    """Тесты для регистрации пользователей."""
 
     def setUp(self):
         self.client = APIClient()
@@ -50,7 +50,7 @@ class UserRegistrationTest(APITestCase):
         }
 
     def test_valid_user_registration(self):
-        """Тест валидной регистрации пользователя"""
+        """Тест валидной регистрации пользователя."""
         response = self.client.post(reverse("api-register"), self.valid_payload, format="json")
         print(f"Registration response: {response.status_code}")
         print(f"Registration data: {response.data}")
@@ -58,14 +58,14 @@ class UserRegistrationTest(APITestCase):
         self.assertEqual(User.objects.count(), 1)
 
     def test_invalid_user_registration(self):
-        """Тест невалидной регистрации пользователя"""
+        """Тест невалидной регистрации пользователя."""
         response = self.client.post(reverse("api-register"), self.invalid_payload, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(User.objects.count(), 0)
 
 
 class UserLoginTest(APITestCase):
-    """Тесты для входа пользователей"""
+    """Тесты для входа пользователей."""
 
     def setUp(self):
         self.client = APIClient()
@@ -76,7 +76,7 @@ class UserLoginTest(APITestCase):
         self.invalid_payload = {"phone": "+1234567890", "password": "wrongpassword"}
 
     def test_valid_user_login(self):
-        """Тест валидного входа пользователя"""
+        """Тест валидного входа пользователя."""
         response = self.client.post(reverse("api-login"), self.valid_payload, format="json")
         print(f"Login response: {response.status_code}")
         print(f"Login data: {response.data}")
@@ -85,7 +85,7 @@ class UserLoginTest(APITestCase):
         self.assertIn("message", response.data)
 
     def test_invalid_user_login(self):
-        """Тест невалидного входа пользователя"""
+        """Тест невалидного входа пользователя."""
         response = self.client.post(reverse("api-login"), self.invalid_payload, format="json")
         print(f"Invalid login response: {response.status_code}")
         print(f"Invalid login data: {response.data}")
@@ -94,7 +94,7 @@ class UserLoginTest(APITestCase):
 
 
 class UserProfileTest(APITestCase):
-    """Тесты для профиля пользователя"""
+    """Тесты для профиля пользователя."""
 
     def setUp(self):
         self.client = APIClient()
@@ -105,7 +105,7 @@ class UserProfileTest(APITestCase):
         self.client.force_authenticate(user=self.user)
 
     def test_user_profile_retrieval(self):
-        """Тест получения профиля пользователя"""
+        """Тест получения профиля пользователя."""
         # Попробуем оба возможных имени маршрута
         try:
             response = self.client.get(reverse("profile-api"))
@@ -116,7 +116,7 @@ class UserProfileTest(APITestCase):
         self.assertEqual(response.data["phone"], self.user.phone)
 
     def test_user_profile_update(self):
-        """Тест обновления профиля пользователя"""
+        """Тест обновления профиля пользователя."""
         # Попробуем оба возможных имени маршрута
         try:
             url = reverse("profile-api")
@@ -130,7 +130,7 @@ class UserProfileTest(APITestCase):
 
 
 class PaymentModelTest(TestCase):
-    """Тесты для модели Payment"""
+    """Тесты для модели Payment."""
 
     def setUp(self):
         self.user = User.objects.create_user(
@@ -141,12 +141,12 @@ class PaymentModelTest(TestCase):
         )
 
     def test_payment_creation(self):
-        """Тест создания платежа"""
+        """Тест создания платежа."""
         self.assertEqual(self.payment.amount, 100.00)
         self.assertEqual(self.payment.status, "pending")
 
     def test_mark_as_paid(self):
-        """Тест метода mark_as_paid"""
+        """Тест метода mark_as_paid."""
         self.payment.mark_as_paid()
         self.assertEqual(self.payment.status, "paid")
         self.user.refresh_from_db()
@@ -154,7 +154,7 @@ class PaymentModelTest(TestCase):
 
 
 class PaymentWebhookTest(APITestCase):
-    """Тесты для вебхука платежей"""
+    """Тесты для вебхука платежей."""
 
     def setUp(self):
         self.client = APIClient()
@@ -165,23 +165,13 @@ class PaymentWebhookTest(APITestCase):
             user=self.user, amount=100.00, stripe_session_id="test_session_id", status="pending"
         )
 
-    def test_webhook_payment_success(self):
-        """Тест успешного вебхука платежа"""
-        # Заглушка для теста вебхука
-        pass
-
-    def test_webhook_payment_failure(self):
-        """Тест неуспешного вебхука платежа"""
-        # Заглушка для теста вебхука
-        pass
-
 
 # Тест для отладки
 class DebugTest(APITestCase):
-    """Тест для отладки"""
+    """Тест для отладки."""
 
     def test_debug_registration(self):
-        """Тест для отладки регистрации"""
+        """Тест для отладки регистрации."""
         payload = {
             "username": "debuguser",
             "phone": "+1234567891",
@@ -197,3 +187,105 @@ class DebugTest(APITestCase):
         # Если есть ошибки, выведем их
         if response.status_code != 201:
             print("Errors:", response.data)
+
+
+class JWTAuthViewTest(APITestCase):
+    """Тесты для аутентификации JWT."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username="testuser", phone="+1234567890", email="testuser@example.com", password="testpass123"
+        )
+        self.valid_payload = {"phone": "+1234567890", "password": "testpass123"}
+        self.invalid_payload = {"phone": "+1234567890", "password": "wrongpassword"}
+
+    def test_valid_jwt_auth(self):
+        """Тест валидной аутентификации JWT."""
+        response = self.client.post(reverse("jwt-auth"), self.valid_payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", response.data)
+
+    def test_invalid_jwt_auth(self):
+        """Тест невалидной аутентификации JWT."""
+        response = self.client.post(reverse("jwt-auth"), self.invalid_payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class UserViewsTest(APITestCase):
+    """Тесты для представлений пользователей."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            phone='+1234567890',
+            email='testuser@example.com',
+            password='testpass123'
+        )
+        self.client = APIClient()
+
+    def test_user_registration(self):
+        """Тест регистрации пользователя"""
+        response = self.client.post(reverse('api-register'), {
+            'phone': '+1234567891',
+            'email': 'newuser@example.com',
+            'username': 'newuser',
+            'password1': 'newpassword123',
+            'password2': 'newpassword123'
+        })
+
+        print("Registration response:", response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(User.objects.filter(phone='+1234567891').exists())
+
+    def test_user_login(self):
+        """Тест входа пользователя"""
+        response = self.client.post(reverse('api-login'), {  # Изменено на 'api-login'
+            'phone': '+1234567890',
+            'password': 'testpass123'
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('message', response.data)
+
+    def test_user_profile(self):
+        """Тест получения и обновления профиля пользователя"""
+        # Сначала логинимся
+        login_response = self.client.post(reverse('api-login'), {  # Изменено на 'api-login'
+            'phone': '+1234567890',
+            'password': 'testpass123'
+        })
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
+
+        # Теперь получаем профиль
+        response = self.client.get(reverse('profile-api'))  # Изменено на 'profile-api'
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['username'], 'testuser')
+
+    def test_subscription(self):
+        """Тест подписки пользователя"""
+        # Сначала логинимся
+        login_response = self.client.post(reverse('api-login'), {  # Изменено на 'api-login'
+            'phone': '+1234567890',
+            'password': 'testpass123'
+        })
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
+
+        response = self.client.post(reverse('subscribe'))  # Изменено на 'subscribe'
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(Payment.objects.filter(user=self.user, status='paid').exists())
+
+    def test_jwt_auth(self):
+        """Тест JWT аутентификации"""
+        response = self.client.post(reverse('jwt-auth'), {  # Правильное имя
+            'phone': '+1234567890',
+            'password': 'testpass123'
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+
+    def test_password_reset(self):
+        """Тест сброса пароля"""
+        response = self.client.post(reverse('password_reset'), {  # Правильное имя
+            'email': 'testuser@example.com'
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

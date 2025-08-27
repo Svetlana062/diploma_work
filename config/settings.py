@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",  # Для работы с API
+    "rest_framework_simplejwt",
     "corsheaders",  # Для обработки CORS
     "entries",  # Приложение для публикации записей пользователями
     "users",  # Приложение связанное с пользователями и с платежами
@@ -111,7 +112,10 @@ LOGOUT_REDIRECT_URL = "/entries/"  # после выхода тоже на ст�
 
 # Настройки JWT-токенов
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),  # по умолчанию все защищены
 }
 
@@ -119,6 +123,11 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
 }
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")

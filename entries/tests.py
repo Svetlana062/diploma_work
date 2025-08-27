@@ -12,11 +12,13 @@ class EntryModelTest(TestCase):
     """Тесты для модели Entry."""
 
     def setUp(self):
+        """Настройка тестового пользователя перед каждым тестом."""
         self.user = User.objects.create_user(
             username="testuser", password="testpass123", phone="+71234567890"  # Добавляем обязательное поле phone
         )
 
     def test_create_entry(self):
+        """Тест создания записи Entry."""
         entry = Entry.objects.create(
             title="Тестовая запись",
             content="Это содержание тестовой записи.",
@@ -31,6 +33,7 @@ class EntryModelTest(TestCase):
         self.assertEqual(entry.price, 49.99)
 
     def test_str_method_returns_title(self):
+        """Тест метода __str__ для модели Entry."""
         entry = Entry.objects.create(
             title="Заголовок для str",
             content="Контент",
@@ -39,6 +42,7 @@ class EntryModelTest(TestCase):
         self.assertEqual(str(entry), "Заголовок для str")
 
     def test_default_values_for_is_paid_and_price(self):
+        """Тест значений по умолчанию для полей is_paid и price."""
         entry = Entry.objects.create(
             title="Запись с дефолтными значениями",
             content="Контент",
@@ -48,6 +52,7 @@ class EntryModelTest(TestCase):
         self.assertEqual(entry.price, 0)
 
     def test_ordering_of_entries(self):
+        """Тест порядка записей в базе данных."""
         entry1 = Entry.objects.create(
             title="Первая запись",
             content="Контент 1",
@@ -63,6 +68,7 @@ class EntryModelTest(TestCase):
         self.assertEqual(entries[1], entry1)
 
     def test_content_field_max_length(self):
+        """Тест максимальной длины поля title."""
         max_length_title = "A" * 200
         entry = Entry.objects.create(
             title=max_length_title,
@@ -72,6 +78,7 @@ class EntryModelTest(TestCase):
         self.assertEqual(entry.title, max_length_title)
 
     def test_delete_author_deletes_entries(self):
+        """Тест удаления автора и связанных с ним записей."""
         entry = Entry.objects.create(
             title="Запись для удаления автора",
             content="Контент",
@@ -142,7 +149,7 @@ class EntryListViewTest(TestCase):
         )
 
     def test_entry_list_anonymous(self):
-        """Тест главной страницы для анонимного пользователя"""
+        """Тест главной страницы для анонимного пользователя."""
         response = self.client.get(reverse("entry-list"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Free Entry")

@@ -7,8 +7,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.conf import settings
 from django.contrib.auth import authenticate, login, update_session_auth_hash
 import stripe
+from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Payment
-from .serializers import UserRegistrationSerializer, UserProfileSerializer, UserLoginSerializer
+from .serializers import UserRegistrationSerializer, UserProfileSerializer, UserLoginSerializer, JWTAuthSerializer
 from django.contrib.auth.views import (
     PasswordResetView,
     PasswordResetDoneView,
@@ -27,6 +28,7 @@ STRIPE_MOCK_MODE = True  # Переключить на False для реальн
 
 
 class UserRegistrationView(APIView):
+    """API представление для регистрации нового пользователя."""
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -38,6 +40,7 @@ class UserRegistrationView(APIView):
 
 
 class UserLoginView(APIView):
+    """API представление для аутентификации пользователя."""
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -45,11 +48,20 @@ class UserLoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data["user"]
             login(request, user)
-            return Response({"message": "Login successful"}, status=status.HTTP_200_OK)
+
+            # Генерация JWT токенов
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+                "message": "Login successful"
+            }, status=status.HTTP_200_OK)
         return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class UserLoginHTMLView(View):
+    """HTML представление для страницы входа пользователя."""
     def get(self, request):
         form = LoginForm()
         return render(request, "users/login.html", {"form": form})
@@ -69,28 +81,36 @@ class UserLoginHTMLView(View):
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
+    """API представление для получения и обновления профиля пользователя."""
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
+        """Возвращает объект текущего пользователя."""
         return self.request.user
 
 
 class UserProfileHTMLView(LoginRequiredMixin, TemplateView):
+    """HTML представление для страницы профиля пользователя."""
     template_name = "users/profile.html"
 
     def get_context_data(self, **kwargs):
+        """Добавляет объект пользователя в контекст шаблона."""
         context = super().get_context_data(**kwargs)
         context["user"] = self.request.user
         return context
 
 
 class UserRegistrationHTMLView(View):
+    """HTML представление для страницы регистрации пользователя.HTML представление для страницы регистрации пользователя."""
+
     def get(self, request):
+        """Отображает форму регистрации."""
         form = RegistrationForm()
         return render(request, "users/register.html", {"form": form})
 
     def post(self, request):
+        """Обрабатывает отправку формы регистрации."""
         form = RegistrationForm(request.POST)
         if form.is_valid():
             serializer = UserRegistrationSerializer(data=form.cleaned_data)
@@ -106,6 +126,7 @@ class UserRegistrationHTMLView(View):
 
 
 class SubscriptionView(APIView):
+    """API представление для обработки подписки и платежей."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -159,6 +180,7 @@ class SubscriptionView(APIView):
 
 
 class PaymentWebhookView(APIView):
+    """API представление для обработки вебхуков от Stripe."""
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -202,6 +224,7 @@ class PaymentWebhookView(APIView):
 
 
 class CustomLogoutView(LoginRequiredMixin, View):
+    """Представление для выхода пользователя из системы."""
     def post(self, request):
         logout(request)
         return redirect("entry-list")
@@ -214,23 +237,26 @@ class CustomLogoutView(LoginRequiredMixin, View):
 
 # Для восстановления пароля
 
-
 class UserPasswordResetView(PasswordResetView):
+    """Представление для сброса пароля пользователя."""
     template_name = "users/registration/password_reset.html"
     email_template_name = "users/registration/password_reset_email.html"
     success_url = reverse_lazy("password_reset_done")
 
 
 class UserPasswordResetDoneView(PasswordResetDoneView):
+    """Представление для отображения страницы подтверждения отправки письма."""
     template_name = "users/registration/password_reset_done.html"
 
 
 class UserPasswordResetConfirmView(PasswordResetConfirmView):
+    """Представление для подтверждения сброса пароля."""
     template_name = "users/registration/password_reset_confirm.html"
     success_url = reverse_lazy("password_reset_complete")
 
 
 class UserPasswordResetCompleteView(PasswordResetCompleteView):
+    """Представление для отображения страницы успешного сброса пароля."""
     template_name = "users/registration/password_reset_complete.html"
 
 
@@ -246,3 +272,59 @@ class ForceRefreshSessionView(APIView):
     def get(self, request):
         update_session_auth_hash(request, request.user)
         return redirect("entry-list")
+
+
+class JWTAuthView(APIView):
+    """API представление для аутентификации через JWT токены."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = JWTAuthSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data["user"]
+            return Response(
+                {
+                    "refresh": serializer.validated_data["refresh"],
+                    "access": serializer.validated_data["access"],
+                    "user": UserProfileSerializer(user).data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class JWTSignupView(APIView):
+    """API представление для регистрации с JWT токенами."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+
+            # Генерируем JWT токены после регистрации
+            refresh = RefreshToken.for_user(user)
+
+            return Response(
+                {
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
+                    "user": UserProfileSerializer(user).data,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class JWTLogoutView(APIView):
+    """API представление для выхода из системы с JWT токенами."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh")
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
