@@ -54,7 +54,11 @@ jobs:
         echo "DEBUG=False" >> .env
 
     - name: Wait for PostgreSQL to be ready
-      run: sleep 10
+      run: |
+        until pg_isready -h postgres -U ${{ secrets.DATABASE_USER }}; do
+          echo "Waiting for PostgreSQL..."
+          sleep 2
+        done
 
     - name: Run migrations
       env:
