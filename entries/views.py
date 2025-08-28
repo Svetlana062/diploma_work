@@ -122,7 +122,7 @@ class EntryDetailView(DetailView):
 
         # Разрешаем доступ если: запись бесплатная, пользователь - автор записи,
         # пользователь имеет подписку
-        if entry.is_paid and not (user == entry.author or user_has_subscription(user)):
+        if entry.is_paid and not (user == entry.author or (hasattr(user, "is_paid") and user.is_paid)):
 
             if user.is_authenticated:
                 messages.warning(request, "Для просмотра этой записи нужна подписка")

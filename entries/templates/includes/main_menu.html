@@ -15,7 +15,7 @@
             <a class="p-2 btn btn-outline-success me-2" href="{% url 'entry-create' %}">Создать запись</a>
 
             <!-- Подписка -->
-            {% if not user.is_subscribed %}
+            {% if not user.is_paid %}
                 <a class="p-2 btn btn-warning me-2" href="{% url 'subscribe' %}">💰 Оформить подписку</a>
             {% else %}
                 <span class="badge bg-success me-2">Подписка активна</span>
@@ -27,6 +27,7 @@
             <!-- Выход -->
             <a href="{% url 'logout' %}" class="p-2 btn btn-outline-secondary">Выход</a>
 
+        {% else %}
             <!-- Войти -->
             <a class="p-2 btn btn-outline-primary me-2" href="{% url 'login' %}">Войти</a>
 
