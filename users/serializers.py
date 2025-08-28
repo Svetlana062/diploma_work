@@ -6,6 +6,7 @@ from .models import CustomUser, Payment
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     """Сериализатор для регистрации пользователей."""
+
     password1 = serializers.CharField(write_only=True)
     password2 = serializers.CharField(write_only=True)
 
@@ -37,6 +38,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 class UserLoginSerializer(serializers.Serializer):
     """Сериализатор для логина пользователей."""
+
     phone = serializers.CharField()
     password = serializers.CharField(write_only=True)
 
@@ -56,6 +58,7 @@ class UserLoginSerializer(serializers.Serializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """Сериализатор для отображения профиля пользователя."""
+
     class Meta:
         model = CustomUser
         fields = ["id", "phone", "email", "username", "is_paid"]
@@ -63,6 +66,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class PaymentSerializer(serializers.ModelSerializer):
     """Сериализатор для платежей."""
+
     class Meta:
         model = Payment
         fields = ["id", "amount", "status", "created_at"]
@@ -70,6 +74,7 @@ class PaymentSerializer(serializers.ModelSerializer):
 
 class JWTAuthSerializer(serializers.Serializer):
     """Сериализатор для аутентификации с использованием JWT."""
+
     phone = serializers.CharField()
     password = serializers.CharField(write_only=True)
 

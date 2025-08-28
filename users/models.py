@@ -5,6 +5,7 @@ from django.core.validators import RegexValidator
 
 class CustomUser(AbstractUser):
     """Пользовательская модель, расширяющая стандартную AbstractUser."""
+
     username = models.CharField(max_length=150, null=True, blank=True)
     email = models.EmailField(blank=True, null=True)
     phone = models.CharField(
@@ -28,6 +29,7 @@ class CustomUser(AbstractUser):
 
 class Payment(models.Model):
     """Модель, представляющая платеж, совершенный пользователем."""
+
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="payments")
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     stripe_session_id = models.CharField(max_length=255, unique=True)

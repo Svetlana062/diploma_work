@@ -24,6 +24,7 @@ from .utils import user_has_subscription
 
 class EntryViewSet(viewsets.ModelViewSet):
     """ViewSet для модели Entry, обеспечивающий стандартные CRUD-операции."""
+
     model = Entry
     queryset = Entry.objects.all()
     serializer_class = EntrySerializer
@@ -64,6 +65,7 @@ class EntryViewSet(viewsets.ModelViewSet):
 
 class EntryListView(ListView):
     """HTML-страница со списком всех записей."""
+
     model = Entry
     template_name = "entries/entry_list.html"
     context_object_name = "entries"
@@ -92,6 +94,7 @@ class EntryListView(ListView):
 
 class FreeEntriesListView(ListView):
     """Страница со списком только бесплатных записей."""
+
     model = Entry
     template_name = "entries/entry_list.html"
     context_object_name = "entries"
@@ -111,6 +114,7 @@ class FreeEntriesListView(ListView):
 
 class EntryDetailView(DetailView):
     """Страница с подробным просмотром одной записи."""
+
     model = Entry
     template_name = "entries/entry_detail.html"
     context_object_name = "entry"
@@ -136,6 +140,7 @@ class EntryDetailView(DetailView):
 
 class EntryCreateView(LoginRequiredMixin, CreateView):
     """Создает новую запись. Требует входа в систему."""
+
     model = Entry
     template_name = "entries/entry_form.html"
     fields = ["title", "content", "is_paid"]
@@ -151,6 +156,7 @@ class EntryCreateView(LoginRequiredMixin, CreateView):
 
 class EntryUpdateView(LoginRequiredMixin, UpdateView):
     """Ограничивает редактирование только записями текущего пользователя."""
+
     model = Entry
     template_name = "entries/entry_form.html"
     fields = ["title", "content", "is_paid"]
@@ -168,6 +174,7 @@ class EntryUpdateView(LoginRequiredMixin, UpdateView):
 
 class EntryDeleteView(LoginRequiredMixin, DeleteView):
     """Удаляет запись. Требует входа в систему."""
+
     model = Entry
     template_name = "entries/entry_confirm_delete.html"
     success_url = reverse_lazy("entry-list")
@@ -184,6 +191,7 @@ class EntryDeleteView(LoginRequiredMixin, DeleteView):
 
 class MyEntriesListView(LoginRequiredMixin, ListView):
     """Страница со списком собственных записей пользователя."""
+
     model = Entry
     template_name = "entries/entry_list.html"  # Используем шаблон для списка
     context_object_name = "entries"

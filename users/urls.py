@@ -40,7 +40,7 @@ urlpatterns = [
     path("reset/done/", views.UserPasswordResetCompleteView.as_view(), name="password_reset_complete"),
     # JWT endpoints
     path("api/auth/jwt/login/", JWTAuthView.as_view(), name="jwt_login"),
-    path('api/jwt-auth/', JWTAuthView.as_view(), name='jwt-auth'),
+    path("api/jwt-auth/", JWTAuthView.as_view(), name="jwt-auth"),
     path("api/auth/jwt/signup/", JWTSignupView.as_view(), name="jwt_signup"),
     path("api/auth/jwt/logout/", JWTLogoutView.as_view(), name="jwt_logout"),
     path("api/auth/jwt/refresh/", TokenRefreshView.as_view(), name="token_refresh"),

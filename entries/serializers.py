@@ -4,6 +4,7 @@ from .models import Entry
 
 class EntrySerializer(serializers.ModelSerializer):
     """Сериализатор для модели Entry."""
+
     author_name = serializers.CharField(source="author.username", read_only=True)
     can_view = serializers.SerializerMethodField()
 

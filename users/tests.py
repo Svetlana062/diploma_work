@@ -217,75 +217,70 @@ class UserViewsTest(APITestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            username='testuser',
-            phone='+1234567890',
-            email='testuser@example.com',
-            password='testpass123'
+            username="testuser", phone="+1234567890", email="testuser@example.com", password="testpass123"
         )
         self.client = APIClient()
 
     def test_user_registration(self):
         """Тест регистрации пользователя"""
-        response = self.client.post(reverse('api-register'), {
-            'phone': '+1234567891',
-            'email': 'newuser@example.com',
-            'username': 'newuser',
-            'password1': 'newpassword123',
-            'password2': 'newpassword123'
-        })
+        response = self.client.post(
+            reverse("api-register"),
+            {
+                "phone": "+1234567891",
+                "email": "newuser@example.com",
+                "username": "newuser",
+                "password1": "newpassword123",
+                "password2": "newpassword123",
+            },
+        )
 
         print("Registration response:", response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(User.objects.filter(phone='+1234567891').exists())
+        self.assertTrue(User.objects.filter(phone="+1234567891").exists())
 
     def test_user_login(self):
         """Тест входа пользователя"""
-        response = self.client.post(reverse('api-login'), {  # Изменено на 'api-login'
-            'phone': '+1234567890',
-            'password': 'testpass123'
-        })
+        response = self.client.post(
+            reverse("api-login"), {"phone": "+1234567890", "password": "testpass123"}  # Изменено на 'api-login'
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('message', response.data)
+        self.assertIn("message", response.data)
 
     def test_user_profile(self):
         """Тест получения и обновления профиля пользователя"""
         # Сначала логинимся
-        login_response = self.client.post(reverse('api-login'), {  # Изменено на 'api-login'
-            'phone': '+1234567890',
-            'password': 'testpass123'
-        })
+        login_response = self.client.post(
+            reverse("api-login"), {"phone": "+1234567890", "password": "testpass123"}  # Изменено на 'api-login'
+        )
         self.assertEqual(login_response.status_code, status.HTTP_200_OK)
 
         # Теперь получаем профиль
-        response = self.client.get(reverse('profile-api'))  # Изменено на 'profile-api'
+        response = self.client.get(reverse("profile-api"))  # Изменено на 'profile-api'
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['username'], 'testuser')
+        self.assertEqual(response.data["username"], "testuser")
 
     def test_subscription(self):
         """Тест подписки пользователя"""
         # Сначала логинимся
-        login_response = self.client.post(reverse('api-login'), {  # Изменено на 'api-login'
-            'phone': '+1234567890',
-            'password': 'testpass123'
-        })
+        login_response = self.client.post(
+            reverse("api-login"), {"phone": "+1234567890", "password": "testpass123"}  # Изменено на 'api-login'
+        )
         self.assertEqual(login_response.status_code, status.HTTP_200_OK)
 
-        response = self.client.post(reverse('subscribe'))  # Изменено на 'subscribe'
+        response = self.client.post(reverse("subscribe"))  # Изменено на 'subscribe'
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(Payment.objects.filter(user=self.user, status='paid').exists())
+        self.assertTrue(Payment.objects.filter(user=self.user, status="paid").exists())
 
     def test_jwt_auth(self):
         """Тест JWT аутентификации"""
-        response = self.client.post(reverse('jwt-auth'), {  # Правильное имя
-            'phone': '+1234567890',
-            'password': 'testpass123'
-        })
+        response = self.client.post(
+            reverse("jwt-auth"), {"phone": "+1234567890", "password": "testpass123"}  # Правильное имя
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('access', response.data)
+        self.assertIn("access", response.data)
 
     def test_password_reset(self):
         """Тест сброса пароля"""
-        response = self.client.post(reverse('password_reset'), {  # Правильное имя
-            'email': 'testuser@example.com'
-        })
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.client.post(reverse("password_reset"), {"email": "testuser@example.com"})
+        print(f"Password reset response status: {response.status_code}")  # Логирование статуса
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)  # Проверка на редирект
