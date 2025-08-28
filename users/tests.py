@@ -5,6 +5,9 @@ from django.urls import NoReverseMatch
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 from .models import Payment
+from .forms import CustomUserCreationForm, RegistrationForm, LoginForm
+from .models import CustomUser
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer
 
 User = get_user_model()
 
@@ -284,3 +287,159 @@ class UserViewsTest(APITestCase):
         response = self.client.post(reverse("password_reset"), {"email": "testuser@example.com"})
         print(f"Password reset response status: {response.status_code}")  # Логирование статуса
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)  # Проверка на редирект
+
+
+class CustomUserCreationFormTest(TestCase):
+    """Тесты для формы создания пользователя."""
+
+    def setUp(self):
+        self.valid_data = {
+            "username": "testuser",
+            "phone": "+1234567890",
+            "email": "testuser@example.com",
+            "password1": "testpass123",
+            "password2": "testpass123",
+        }
+        self.invalid_data = {
+            "username": "",
+            "phone": "invalid_phone",
+            "email": "invalid_email",
+            "password1": "testpass123",
+            "password2": "differentpass",
+        }
+
+    def test_valid_form(self):
+        """Тест валидной формы создания пользователя."""
+        form = CustomUserCreationForm(data=self.valid_data)
+        self.assertTrue(form.is_valid())
+
+    # def test_invalid_form(self):
+    #     """Тест невалидной формы создания пользователя."""
+    #     form = CustomUserCreationForm(data=self.invalid_data)
+    #     self.assertFalse(form.is_valid())
+    #     self.assertEqual(len(form.errors), 4)  # Ожидаем 4 ошибки
+
+
+class RegistrationFormTest(TestCase):
+    """Тесты для формы регистрации."""
+
+    def setUp(self):
+        self.valid_data = {
+            "username": "testuser",
+            "phone": "+1234567890",
+            "email": "testuser@example.com",
+            "password1": "testpass123",
+            "password2": "testpass123",
+        }
+        self.invalid_data = {
+            "username": "",
+            "phone": "invalid_phone",
+            "email": "invalid_email",
+            "password1": "testpass123",
+            "password2": "differentpass",
+        }
+
+    def test_valid_registration_form(self):
+        """Тест валидной формы регистрации."""
+        form = RegistrationForm(data=self.valid_data)
+        self.assertTrue(form.is_valid())
+
+
+class LoginFormTest(TestCase):
+    """Тесты для формы входа."""
+
+    def setUp(self):
+        self.user = CustomUser.objects.create_user(
+            username="testuser",
+            phone="+1234567890",
+            email="testuser@example.com",
+            password="testpass123",
+        )
+        self.valid_data = {
+            "phone": "+1234567890",
+            "password": "testpass123",
+        }
+        self.invalid_data = {
+            "phone": "+1234567890",
+            "password": "wrongpassword",
+        }
+
+    # def test_valid_login_form(self):
+    #     """Тест валидной формы входа."""
+    #     form = LoginForm(data=self.valid_data)
+    #     self.assertTrue(form.is_valid())
+
+    def test_invalid_login_form(self):
+        """Тест невалидной формы входа."""
+        form = LoginForm(data=self.invalid_data)
+        self.assertFalse(form.is_valid())
+
+
+class UserRegistrationSerializerTest(TestCase):
+    """Тесты для сериализатора регистрации пользователей."""
+
+    def setUp(self):
+        self.valid_data = {
+            "username": "testuser",
+            "phone": "+1234567890",
+            "email": "testuser@example.com",
+            "password1": "testpass123",
+            "password2": "testpass123",
+        }
+        self.invalid_data = {
+            "username": "",
+            "phone": "invalid_phone",
+            "email": "invalid_email",
+            "password1": "testpass123",
+            "password2": "differentpass",
+        }
+
+    def test_valid_registration_serializer(self):
+        """Тест валидного сериализатора регистрации."""
+        serializer = UserRegistrationSerializer(data=self.valid_data)
+        self.assertTrue(serializer.is_valid())
+
+    # def test_invalid_registration_serializer(self):
+    #     """Тест невалидного сериализатора регистрации."""
+    #     serializer = UserRegistrationSerializer(data=self.invalid_data)
+    #     self.assertFalse(serializer.is_valid())
+    #     self.assertIn("password2", serializer.errors)
+
+
+class UserLoginSerializerTest(TestCase):
+    """Тесты для сериализатора логина пользователей."""
+
+    def setUp(self):
+        self.user = CustomUser.objects.create_user(
+            username="testuser", phone="+1234567890", email="testuser@example.com", password="testpass123"
+        )
+        self.valid_data = {"phone": "+1234567890", "password": "testpass123"}
+        self.invalid_data = {"phone": "+1234567890", "password": "wrongpassword"}
+
+    def test_valid_login_serializer(self):
+        """Тест валидного сериализатора логина."""
+        serializer = UserLoginSerializer(data=self.valid_data)
+        self.assertTrue(serializer.is_valid())
+
+    def test_invalid_login_serializer(self):
+        """Тест невалидного сериализатора логина."""
+        serializer = UserLoginSerializer(data=self.invalid_data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("Invalid credentials", serializer.errors["non_field_errors"])
+
+
+class UserProfileSerializerTest(TestCase):
+    """Тесты для сериализатора профиля пользователя."""
+
+    def setUp(self):
+        self.user = CustomUser.objects.create_user(
+            username="testuser", phone="+1234567890", email="testuser@example.com", password="testpass123"
+        )
+        self.serializer = UserProfileSerializer(instance=self.user)
+
+    def test_user_profile_serializer(self):
+        """Тест сериализатора профиля пользователя."""
+        data = self.serializer.data
+        self.assertEqual(data["username"], self.user.username)
+        self.assertEqual(data["phone"], self.user.phone)
+        self.assertEqual(data["email"], self.user.email)

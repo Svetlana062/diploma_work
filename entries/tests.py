@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from .models import Entry
 from .serializers import EntrySerializer
+from entries.utils import user_has_subscription
 
 User = get_user_model()
 
@@ -178,3 +179,95 @@ class EntryCreateUpdateDeleteTest(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.assertIn("/users/login/", response.url)
+
+
+class UtilsTest(TestCase):
+    """Тесты для утилит приложения entries."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username="testuser", password="testpass123", phone="+71234567890")
+
+    def test_user_has_subscription_authenticated_with_subscription(self):
+        """Тест для аутентифицированного пользователя с подпиской."""
+        self.user.is_paid = True
+        self.user.save()
+        self.assertTrue(user_has_subscription(self.user))
+
+    def test_user_has_subscription_authenticated_without_subscription(self):
+        """Тест для аутентифицированного пользователя без подписки."""
+        self.user.is_paid = False
+        self.user.save()
+        self.assertFalse(user_has_subscription(self.user))
+
+    def test_user_has_subscription_anonymous(self):
+        """Тест для анонимного пользователя."""
+        self.assertFalse(user_has_subscription(User()))
+
+
+class EntryModelAdditionalTest(TestCase):
+    """Дополнительные тесты для модели Entry."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username="testuser", password="testpass123", phone="+71234567890")
+
+    def test_created_at_auto_now_add(self):
+        """Тест автоматического добавления даты создания."""
+        entry = Entry.objects.create(title="Тестовая запись", content="Содержание", author=self.user)
+        self.assertIsNotNone(entry.created_at)
+
+    def test_updated_at_auto_now(self):
+        """Тест автоматического обновления даты изменения."""
+        entry = Entry.objects.create(title="Тестовая запись", content="Содержание", author=self.user)
+        original_updated_at = entry.updated_at
+
+        # Изменяем запись
+        entry.title = "Измененный заголовок"
+        entry.save()
+
+        self.assertNotEqual(entry.updated_at, original_updated_at)
+
+    def test_price_field_decimal_places(self):
+        """Тест корректности десятичных знаков в поле цены."""
+        entry = Entry.objects.create(
+            title="Тестовая запись", content="Содержание", author=self.user, is_paid=True, price=19.99
+        )
+        self.assertEqual(entry.price, 19.99)
+
+    def test_verbose_names(self):
+        """Тест корректности verbose_name полей."""
+        entry = Entry.objects.create(title="Тестовая запись", content="Содержание", author=self.user)
+
+        self.assertEqual(entry._meta.get_field("title").verbose_name, "Заголовок")
+        self.assertEqual(entry._meta.get_field("content").verbose_name, "Содержание")
+        self.assertEqual(entry._meta.get_field("author").verbose_name, "Автор")
+        self.assertEqual(entry._meta.get_field("created_at").verbose_name, "Дата создания")
+        self.assertEqual(entry._meta.get_field("updated_at").verbose_name, "Дата обновления")
+        self.assertEqual(entry._meta.get_field("is_paid").verbose_name, "Платный контент")
+        self.assertEqual(entry._meta.get_field("price").verbose_name, "Цена")
+
+
+class EntryViewsAdditionalTest(TestCase):
+    """Дополнительные тесты для представлений entries."""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username="testuser", password="testpass123", phone="+71234567890")
+        self.entry = Entry.objects.create(title="Тестовая запись", content="Содержание", author=self.user)
+
+    def test_free_entries_list_view(self):
+        """Тест представления списка бесплатных записей."""
+        response = self.client.get(reverse("free-entries"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "entries/entry_list.html")
+
+    def test_paid_entries_list_view(self):
+        """Тест представления списка платных записей."""
+        response = self.client.get(reverse("paid-entries"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "entries/entry_list.html")
+
+    def test_subscription_info_view(self):
+        """Тест представления информации о подписке."""
+        response = self.client.get(reverse("subscription-info"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "entries/subscription_info.html")
