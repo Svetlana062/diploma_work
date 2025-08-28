@@ -239,8 +239,8 @@ class CustomLogoutView(LoginRequiredMixin, View):
 
 class UserPasswordResetView(PasswordResetView):
     """Представление для сброса пароля пользователя."""
-    template_name = "users/registration/password_reset.html"
-    email_template_name = "users/registration/password_reset_email.html"
+    template_name = "registration/password_reset.html"
+    email_template_name = "registration/password_reset_email.html"
     success_url = reverse_lazy("password_reset_done")
 
 
