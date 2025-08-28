@@ -75,7 +75,7 @@ class EntryListView(ListView):
 
         if self.request.user.is_authenticated:
             # Проверяем подписку
-            if hasattr(self.request.user, "is_subscribed") and self.request.user.is_subscribed:
+            if hasattr(self.request.user, "is_paid") and self.request.user.is_paid:
                 return queryset  # Показываем все записи подписчику
             else:
                 # Показываем бесплатные + свои платные записи
