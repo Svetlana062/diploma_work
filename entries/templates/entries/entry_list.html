@@ -54,6 +54,7 @@
                 <a href="{% url 'free-entries' %}" class="d-block mb-2">Бесплатные записи</a>
                 {% if user.is_authenticated %}
                 <a href="{% url 'my-entries' %}" class="d-block mb-2">Мои записи</a>
+                <a href="{% url 'paid-entries' %}" class="d-block mb-2">По подписке</a>
                 {% endif %}
             </div>
         </div>
