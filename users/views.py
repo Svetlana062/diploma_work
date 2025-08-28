@@ -246,18 +246,18 @@ class UserPasswordResetView(PasswordResetView):
 
 class UserPasswordResetDoneView(PasswordResetDoneView):
     """Представление для отображения страницы подтверждения отправки письма."""
-    template_name = "users/registration/password_reset_done.html"
+    template_name = "registration/password_reset_done.html"
 
 
 class UserPasswordResetConfirmView(PasswordResetConfirmView):
     """Представление для подтверждения сброса пароля."""
-    template_name = "users/registration/password_reset_confirm.html"
+    template_name = "registration/password_reset_confirm.html"
     success_url = reverse_lazy("password_reset_complete")
 
 
 class UserPasswordResetCompleteView(PasswordResetCompleteView):
     """Представление для отображения страницы успешного сброса пароля."""
-    template_name = "users/registration/password_reset_complete.html"
+    template_name = "registration/password_reset_complete.html"
 
 
 class ForceRefreshSessionView(APIView):

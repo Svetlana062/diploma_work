@@ -46,7 +46,10 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, "templates")],
+        "DIRS": [
+            os.path.join(BASE_DIR, "users/templates"),  # Путь к шаблонам приложения users
+            os.path.join(BASE_DIR, "entries/templates"),  # Путь к шаблонам приложения entries
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
