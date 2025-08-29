@@ -94,8 +94,5 @@ jobs:
       - name: Check Docker version
         run: docker --version
 
-      - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }} -f Dockerfile .
-
-      - name: Push Docker image to Docker Hub
-        run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
+      - name: Build and push Docker image
+        run: docker buildx build --push -t ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }} .
