@@ -94,5 +94,11 @@ jobs:
       - name: Check Docker version
         run: docker --version
 
+      - name: Debug GitHub variables
+        run: |
+          echo "SHA: ${{ github.sha }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Repository: ${{ github.repository }}"
+
       - name: Build and push Docker image
         run: docker buildx build --push -t ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }} .
