@@ -1,0 +1,84 @@
+{% extends 'includes/base.html' %}
+
+{% block title %}Платные записи - ContentPlatform{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Платные записи</h1>
+    
+    {% if not user_has_subscription %}
+    <div class="alert alert-warning">
+        <h4 class="alert-heading">Требуется подписка</h4>
+        <p>Для просмотра содержимого платных записей необходимо оформить подписку.</p>
+        <a href="{% url 'subscribe' %}" class="btn btn-warning">💰 Оформить подписку</a>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        {% for entry in entries %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 {% if entry.is_paid %}border-warning{% endif %}">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        {{ entry.title }}
+                        {% if entry.is_paid %}
+                        <span class="badge bg-warning text-dark ms-2">💰 Платно</span>
+                        {% endif %}
+                    </h5>
+                    
+                    <p class="card-text text-muted">
+                        Автор: {{ entry.author.username }} | 
+                        {{ entry.created_at|date:"d.m.Y" }}
+                    </p>
+                    
+                    {% if user_has_subscription %}
+                        <p class="card-text">{{ entry.content|truncatewords:30 }}</p>
+                        <a href="{% url 'entry-detail' entry.pk %}" class="btn btn-primary">Читать полностью</a>
+                    {% else %}
+                        <p class="card-text text-muted">
+                            Содержимое доступно только подписчикам
+                        </p>
+                        <button class="btn btn-outline-secondary" disabled>Требуется подписка</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                Платных записей пока нет.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Пагинация -->
+    {% if is_paginated %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">Первая</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">←</a>
+                </li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">→</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Последняя</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

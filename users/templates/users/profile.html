@@ -1,0 +1,29 @@
+{% extends 'includes/base.html' %}
+
+{% block title %}Профиль - ContentPlatform{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Профиль пользователя</div>
+            <div class="card-body">
+                <h5>Имя пользователя: {{ user.username }}</h5>
+                <p>Email: {{ user.email }}</p>
+                <p>Телефон: {{ user.phone }}</p>
+                <p>Статус подписки: {% if user.is_paid %}Премиум{% else %}Бесплатный{% endif %}</p>
+
+                {% if not user.is_paid %}
+                <div class="mt-3">
+                    <a href="{% url 'subscribe' %}" class="btn btn-primary">Купить подписку (500 руб)</a>
+                </div>
+                {% endif %}
+
+                <div class="mt-3">
+                    <a href="{% url 'entry-list' %}" class="btn btn-secondary">Назад к записям</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

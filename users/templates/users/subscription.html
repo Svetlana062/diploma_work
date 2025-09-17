@@ -1,0 +1,22 @@
+{% extends 'includes/base.html' %}
+
+{% block title %}Подписка - ContentPlatform{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Подписка</div>
+            <div class="card-body">
+                <h5>Купить подписку на премиум контент</h5>
+                <p>Стоимость: 500 рублей.</p>
+                <form method="post" action="{% url 'subscription' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">Купить подписку</button>
+                </form>
+                <a href="{% url 'profile' %}" class="btn btn-secondary mt-2">Назад</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

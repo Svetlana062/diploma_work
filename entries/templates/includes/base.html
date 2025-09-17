@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ContentPlatform{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .entry-content {
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+        footer {
+            margin-top: auto;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .main-content {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'entry-list' %}">ContentPlatform</a>
+
+            <div class="navbar-nav ms-auto">
+                {% if user.is_authenticated %}
+                <a class="nav-link" href="{% url 'entry-create' %}">Создать запись</a>
+                <a class="nav-link" href="{% url 'profile' %}">Профиль</a>
+                <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="p-2 btn btn-outline-secondary">Выход</button>
+                </form>
+                {% else %}
+                <a class="nav-link" href="{% url 'login' %}">Войти</a>
+                <a class="nav-link" href="{% url 'register' %}">Регистрация</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 main-content">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <footer class="bg-dark text-white text-center py-4 mt-5">
+        <div class="container">
+            <p>&copy; 2024 ContentPlatform. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
